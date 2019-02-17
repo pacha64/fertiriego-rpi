@@ -1,13 +1,14 @@
 [Unit]
-Description=Fertiriego
+Description=FertiRiego terminal controller
 After=network.target
 StartLimitIntervalSec=0
+
 [Service]
 Type=simple
 Restart=always
 RestartSec=3
 User=pi
-ExecStart=/usr/bin/env python3 /home/pi/fertiriego/main.py
+ExecStart=/usr/bin/env python3 /home/pi/fertiriego-rpi/main.py
 
 [Install]
 WantedBy=multi-user.target
