@@ -111,10 +111,8 @@ TOTAL_INY = 8
 TOTAL_IRR = 50
 DIRTY_ADD = 4234
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
-#USERNAME = "Prueba1"
-#PASSWORD = "goldfinger"
-USERNAME = "prueba"
-PASSWORD = "goldfinger123"
+USERNAME = ""
+PASSWORD = ""
 TIME_UPDATE = 2
 FILEPATH_SAVE = "controller.bin"
 
