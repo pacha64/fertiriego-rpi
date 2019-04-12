@@ -15,6 +15,7 @@ if [ $LOCAL = $REMOTE ]; then
     echo "Up-to-date"
 elif [ $LOCAL = $BASE ]; then
     echo "Need to pull"
+    git pull
     sudo cp fertiriego.service /etc/systemd/system/
     sudo systemctl restart fertiriego.service
 fi
