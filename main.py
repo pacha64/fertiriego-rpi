@@ -111,8 +111,8 @@ TOTAL_INY = 8
 TOTAL_IRR = 50
 DIRTY_ADD = 4234
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
-USERNAME = ""
-PASSWORD = ""
+USERNAME = "loretto"
+PASSWORD = "quinta123"
 TIME_UPDATE = 2
 FILEPATH_SAVE = "controller.bin"
 
@@ -125,7 +125,7 @@ write_backflush = False
 write_solape = False
 write_other = False
 
-terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
+terminalSerial = serial.Serial("/dev/ttyUSB4", 9600, timeout=0.2)
 # 
 def fetch_json():
     response = requests.get(
