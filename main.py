@@ -10,6 +10,7 @@ import requests
 import os.path
 import serial
 from controllerstate import *
+from userpass import getUsername, getPassword
 
 # irrigation, fertilization and inyection
 BASE_PROGFERT = 1600 + 8192
@@ -111,8 +112,8 @@ TOTAL_INY = 8
 TOTAL_IRR = 50
 DIRTY_ADD = 4234
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
-USERNAME = "loretto"
-PASSWORD = "quinta123"
+USERNAME = getUsername()
+PASSWORD = getPassword()
 TIME_UPDATE = 2
 FILEPATH_SAVE = "controller.bin"
 
