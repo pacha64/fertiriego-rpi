@@ -232,6 +232,8 @@ class OtherConfigs():
         self.manual_irrigation_program = 0
         self.button_backwash_now = 0
         self.button_backwash_cancel = 0
+        self.start_button = 0
+        self.stop_button = 0
 
     def __eq__(self, other):
         return str(self.__dict__) == str(other.__dict__)

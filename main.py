@@ -1085,6 +1085,13 @@ def send_alarm():
     dataJson = response.json()
     return dataJson
 
+def send_alarm():
+    read_from_alarms()
+    alarm = cs.alarm
+    response = requests.get(URL_SERVER + 'requests?set_power_buttons&username=' + USERNAME + '&password=' + PASSWORD + '&who=1&stop_button=0&start_button=0')
+    dataJson = response.json()
+    return dataJson
+
 def read_from_terminal_stats():
     termStats = TerminalStats()
     byteList = read_registers(BASE_FERT, 1)
@@ -1463,6 +1470,10 @@ def main_loop():
                     write_controller_backflush()
                 if what["other"]:
                     write_other_configs()
+                    if cs.other.start_button or cs.other.stop_button:
+                        # TODO start/stop
+                        cs.other.start_button = False
+                        cs.other.stop_button = False
                     if cs.other.button_backwash_cancel or cs.other.button_backwash_now:
                         write_backflush_button()
                         send_backwash_buttons()
