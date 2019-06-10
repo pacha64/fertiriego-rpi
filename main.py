@@ -435,8 +435,8 @@ def read_from_controller_irrigation(pr):
     Cadvalves = decode_valves(listaB)
     ProgRiego.valves = Cadvalves
 
-    byteList = read_registers(BASE_PROGRIEGO_STATE+pr-1, 1)
-    ProgRiego.status = byteList[0]
+    #byteList = read_registers(BASE_PROGRIEGO_STATE+pr-1, 1)
+    #ProgRiego.status = byteList[0]
     if ProgRiego != ProgRiegoL:
         write_irrProg[pr - 1] = True
         cs.allIrrigation[pr] = ProgRiego
@@ -748,11 +748,11 @@ def write_controller_irrigation(pr):
         byteList = read_registers(BASE_PROGRIEGO_STATE_RAM, 1)
         byteList[0] = ProgRiego.program
         write_registers(BASE_PROGRIEGO_STATE_RAM, 1, byteList)
-    else:
+    else if ProgRiego.status > 0:
         byteList = read_registers(BASE_PROGRIEGO_STATE+pr-1, 1)
         byteList[0] = ProgRiego.status
         write_registers(BASE_PROGRIEGO_STATE+pr-1, 1, byteList)
-    ProgRiego.status = 0
+    ProgRiego.status = -1
 
 def write_controller_config_alarms():
     ConfigAl = cs.alarm_config
@@ -950,8 +950,8 @@ def send_set_irrigation_state_status(irrId):
         irr = cs.allIrrigation[irrId]
         response = requests.get(URL_SERVER + 'requests?set_irrigation_state_status&username=' + USERNAME + '&password=' + PASSWORD +
             "&program=" + str(irr.program) + "&who=1"
-            "&state=" + str(irr.state) + "&status=0")
-        irr.status = 0
+            "&state=" + str(irr.state) + "&status=-1")
+        irr.status = -1
         dataJson = response.json()
         return (dataJson)
 
