@@ -1435,7 +1435,7 @@ def main_loop():
         if statsCounter % 20 == 0:
             book_count = get_total_books()
             clear_all_books_server()
-            for i in range(1, book_count+1 > 200 ? 200 : book_count+1):
+            for i in range(1, book_count+1 if book_count+1 <= 200 else 200):
                 b = get_book(i)
                 send_books(b)
         statsCounter += 1
