@@ -17,5 +17,6 @@ elif [ $LOCAL = $BASE ]; then
     echo "Need to pull"
     git pull
     sudo cp fertiriego.service /etc/systemd/system/
+    sudo systemctl daemon-reload
     sudo systemctl restart fertiriego.service
 fi
