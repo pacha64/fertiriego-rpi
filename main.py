@@ -950,8 +950,8 @@ def send_set_irrigation_state_status(irrId):
         irr = cs.allIrrigation[irrId]
         response = requests.get(URL_SERVER + 'requests?set_irrigation_state_status&username=' + USERNAME + '&password=' + PASSWORD +
             "&program=" + str(irr.program) + "&who=1"
-            "&state=" + str(irr.state) + "&status=0")
-        irr.status = 0
+            "&state=" + str(irr.state) + "&status=-1")
+        irr.status = -1
         dataJson = response.json()
         return (dataJson)
 
@@ -1425,9 +1425,8 @@ def main_loop():
                 write_other = False
             for prog in cs.allIrrigation:
                 byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
-                if cs.allIrrigation[prog].state != byteList[0]:
-                    cs.allIrrigation[prog].state = byteList[0]
-                    send_set_irrigation_state_status(prog)
+                cs.allIrrigation[prog].state = byteList[0]
+                send_set_irrigation_state_status(prog)
         # mandar cada 2 updates, aprox 4s
         if statsCounter % 2 == 0:
             send_terminal_stats()
@@ -1462,9 +1461,8 @@ def main_loop():
                     write_controller_irrigation(x)
                 for x in what["irrigation"]:
                     byteList = read_registers(BASE_PROGRIEGO_STATE+x-1, 1)
-                    if cs.allIrrigation[x].state != byteList[0]:
-                        cs.allIrrigation[x].state = byteList[0]
-                        send_set_irrigation_state_status(x)
+                    cs.allIrrigation[x].state = byteList[0]
+                    send_set_irrigation_state_status(x)
                 for x in what["fertilization"]:
                     write_controller_fertilization(x)
                 for x in what["inyection"]:
