@@ -748,7 +748,7 @@ def write_controller_irrigation(pr):
         byteList = read_registers(BASE_PROGRIEGO_STATE_RAM, 1)
         byteList[0] = ProgRiego.program
         write_registers(BASE_PROGRIEGO_STATE_RAM, 1, byteList)
-    else if ProgRiego.status > 0:
+    elif ProgRiego.status > 0:
         byteList = read_registers(BASE_PROGRIEGO_STATE+pr-1, 1)
         byteList[0] = ProgRiego.status
         write_registers(BASE_PROGRIEGO_STATE+pr-1, 1, byteList)
