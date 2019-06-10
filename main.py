@@ -118,7 +118,7 @@ URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
 USERNAME = getUsername()
 PASSWORD = getPassword()
 TIME_UPDATE = 2
-FILEPATH_SAVE = "controller.bin"
+FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
 
 write_irrProg = [False] * 50
 write_fertProg = [False] * 20
@@ -748,7 +748,7 @@ def write_controller_irrigation(pr):
         byteList = read_registers(BASE_PROGRIEGO_STATE_RAM, 1)
         byteList[0] = ProgRiego.program
         write_registers(BASE_PROGRIEGO_STATE_RAM, 1, byteList)
-    elif ProgRiego.status > 0:
+    elif ProgRiego.status >= 0:
         byteList = read_registers(BASE_PROGRIEGO_STATE+pr-1, 1)
         byteList[0] = ProgRiego.status
         write_registers(BASE_PROGRIEGO_STATE+pr-1, 1, byteList)
@@ -950,8 +950,8 @@ def send_set_irrigation_state_status(irrId):
         irr = cs.allIrrigation[irrId]
         response = requests.get(URL_SERVER + 'requests?set_irrigation_state_status&username=' + USERNAME + '&password=' + PASSWORD +
             "&program=" + str(irr.program) + "&who=1"
-            "&state=" + str(irr.state) + "&status=-1")
-        irr.status = -1
+            "&state=" + str(irr.state) + "&status=0")
+        irr.status = 0
         dataJson = response.json()
         return (dataJson)
 
@@ -1416,7 +1416,7 @@ def main_loop():
         else:
             logger.info("login error")                           
     else:
-        # mandar manual irr y estado de prog cada 4 updates, aprox 8s
+        # mandar manual irr y estado de prog cada 6 updates, aprox 12s
         if statsCounter % 6 == 0:
             read_from_other_configs()
             global write_other
@@ -1429,7 +1429,7 @@ def main_loop():
                     cs.allIrrigation[prog].state = byteList[0]
                     send_set_irrigation_state_status(prog)
         # mandar cada 2 updates, aprox 4s
-        if statsCounter % 4 == 0:
+        if statsCounter % 2 == 0:
             send_terminal_stats()
             send_alarm()
         if statsCounter % 20 == 0:
@@ -1476,8 +1476,6 @@ def main_loop():
                     if cs.other.button_backwash_cancel or cs.other.button_backwash_now:
                         write_backflush_button()
                         send_backwash_buttons()
-                logger.info("first " + str(cs.other.stop_button))
-                logger.info("first " + str(cs.other.start_button))
                 if cs.other.start_button or cs.other.stop_button:
                     logger.info("sec " + str(cs.other.stop_button))
                     logger.info("sec " + str(cs.other.start_button))
