@@ -408,6 +408,8 @@ class ControllerState:
             new_other.manual_irrigation_water_1 = other_json["manual_irrigation_water_1"]
             new_other.manual_irrigation_water_2 = other_json["manual_irrigation_water_2"]
             new_other.manual_irrigation_program = other_json["manual_irrigation_program"]
+            new_other.start_button = other_json["start_button"]
+            new_other.stop_button = other_json["stop_button"]
             if other_json["button_backwash_cancel"] == 1:
                 new_other.button_backwash_cancel = 1
             else:

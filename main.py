@@ -107,6 +107,9 @@ BASE_BOOKS_TOTAL_QTY = 0xC61
 BASE_BOOKS_PH_EC_AVG = 0xC64
 BASE_BOOKS_IRR_FERT = 0xC44
 
+BASE_START_BUTTON = 0x1BC # setear bit 5
+BASE_STOP_BUTTON = 0x1DC # setear bit 6
+
 TOTAL_FERT = 20
 TOTAL_INY = 8
 TOTAL_IRR = 50
@@ -126,7 +129,7 @@ write_backflush = False
 write_solape = False
 write_other = False
 
-terminalSerial = serial.Serial("/dev/ttyUSB4", 9600, timeout=0.2)
+terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
 # 
 def fetch_json():
     response = requests.get(
@@ -947,7 +950,7 @@ def send_set_irrigation_state_status(irrId):
         irr = cs.allIrrigation[irrId]
         response = requests.get(URL_SERVER + 'requests?set_irrigation_state_status&username=' + USERNAME + '&password=' + PASSWORD +
             "&program=" + str(irr.program) + "&who=1"
-            "&state=" + str(irr.state) + "&status=-1")
+            "&state=" + str(irr.state) + "&status=0")
         irr.status = 0
         dataJson = response.json()
         return (dataJson)
@@ -1085,7 +1088,7 @@ def send_alarm():
     dataJson = response.json()
     return dataJson
 
-def send_alarm():
+def send_power_buttons():
     read_from_alarms()
     alarm = cs.alarm
     response = requests.get(URL_SERVER + 'requests?set_power_buttons&username=' + USERNAME + '&password=' + PASSWORD + '&who=1&stop_button=0&start_button=0')
@@ -1395,7 +1398,7 @@ statsCounter = 0
 
 # logging related
 logger = logging.getLogger()
-handler = RotatingFileHandler("fertiriego.log",maxBytes=1024*1024*400,backupCount=0)
+handler = RotatingFileHandler("/home/pi/fertiriego.log",maxBytes=1024*1024*400,backupCount=0)
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -1470,13 +1473,27 @@ def main_loop():
                     write_controller_backflush()
                 if what["other"]:
                     write_other_configs()
-                    if cs.other.start_button or cs.other.stop_button:
-                        # TODO start/stop
-                        cs.other.start_button = False
-                        cs.other.stop_button = False
                     if cs.other.button_backwash_cancel or cs.other.button_backwash_now:
                         write_backflush_button()
                         send_backwash_buttons()
+                logger.info("first " + str(cs.other.stop_button))
+                logger.info("first " + str(cs.other.start_button))
+                if cs.other.start_button or cs.other.stop_button:
+                    logger.info("sec " + str(cs.other.stop_button))
+                    logger.info("sec " + str(cs.other.start_button))
+                    #BASE_START_BUTTON = 0x1BC # setear bit 5
+                    #BASE_STOP_BUTTON = 0x1DC # setear bit 6
+                    if cs.other.start_button:
+                        byteList = read_registers(BASE_START_BUTTON, 1)
+                        byteList[0] = byteList[0] | (1<<5)
+                        write_registers(BASE_START_BUTTON, 1, byteList)
+                    if cs.other.stop_button:
+                        byteList = read_registers(BASE_STOP_BUTTON, 1)
+                        byteList[0] = byteList[0] | (1<<6)
+                        write_registers(BASE_STOP_BUTTON, 1, byteList)
+                    cs.other.start_button = False
+                    cs.other.stop_button = False
+                    send_power_buttons()
                 if what["config_io"]:
                     write_controller_input_output()
                 if what["alarm_config"]:
