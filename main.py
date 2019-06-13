@@ -949,7 +949,7 @@ def send_set_irrigation_state_status(irrId, shouldReset):
     if irrId in cs.allIrrigation:
         irr = cs.allIrrigation[irrId]
         response = requests.get(URL_SERVER + 'requests?set_irrigation_state_status&username=' + USERNAME + '&password=' + PASSWORD +
-            "&program=" + str(irr.program) + "&who=1&state=" + str(irr.state) + "&status=" + (-2 if shouldReset else -1))
+            "&program=" + str(irr.program) + "&who=1&state=" + str(irr.state) + "&status=" + str(-2 if shouldReset else -1))
         irr.status = -1
         dataJson = response.json()
         return (dataJson)
