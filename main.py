@@ -901,7 +901,7 @@ def send_server():
     for key in cs.allIrrigation:
         if write_irrProg[key - 1] == True and not cs.allIrrigation[key].iszero():
             send_set_irrigation(key)
-            send_set_irrigation_state_status(key, True)
+            send_set_irrigation_state_status(key, False)
     for key in cs.allInyection:
         if write_ConfIny[key - 1] == True and not cs.allInyection[key].iszero():
             send_set_inyection(key)
