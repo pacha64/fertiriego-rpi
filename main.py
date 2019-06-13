@@ -435,8 +435,8 @@ def read_from_controller_irrigation(pr):
     Cadvalves = decode_valves(listaB)
     ProgRiego.valves = Cadvalves
 
-    #byteList = read_registers(BASE_PROGRIEGO_STATE+pr-1, 1)
-    #ProgRiego.status = byteList[0]
+    byteList = read_registers(BASE_PROGRIEGO_STATE+pr-1, 1)
+    ProgRiego.state = byteList[0]
     if ProgRiego != ProgRiegoL:
         write_irrProg[pr - 1] = True
         cs.allIrrigation[pr] = ProgRiego
@@ -950,7 +950,7 @@ def send_set_irrigation_state_status(irrId):
         irr = cs.allIrrigation[irrId]
         response = requests.get(URL_SERVER + 'requests?set_irrigation_state_status&username=' + USERNAME + '&password=' + PASSWORD +
             "&program=" + str(irr.program) + "&who=1"
-            "&state=" + str(irr.state) + "&status=-1")
+            "&state=" + str(irr.state) + "&status=-2")
         irr.status = -1
         dataJson = response.json()
         return (dataJson)
@@ -1433,7 +1433,8 @@ def main_loop():
             send_alarm()
         if statsCounter % 20 == 0:
             book_count = get_total_books()
-            clear_all_books_server()
+            if book_count < get_total_books_server():
+                clear_all_books_server()
             for i in range(1, book_count+1 if book_count+1 <= 200 else 200):
                 b = get_book(i)
                 send_books(b)
