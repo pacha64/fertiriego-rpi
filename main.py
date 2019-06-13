@@ -1416,7 +1416,7 @@ def main_loop():
             logger.info("login error")                           
     else:
         # mandar manual irr y estado de prog cada 6 updates, aprox 12s
-        if statsCounter % 6 == 0:
+        if statsCounter % 8 == 0:
             read_from_other_configs()
             global write_other
             if write_other:
@@ -1427,10 +1427,10 @@ def main_loop():
                 cs.allIrrigation[prog].state = byteList[0]
                 send_set_irrigation_state_status(prog, False)
         # mandar cada 2 updates, aprox 4s
-        if statsCounter % 2 == 0:
+        if statsCounter % 4 == 0:
             send_terminal_stats()
             send_alarm()
-        if statsCounter % 20 == 0:
+        if statsCounter % 600 == 0:
             book_count = get_total_books()
             if book_count < get_total_books_server():
                 clear_all_books_server()
