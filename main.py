@@ -117,7 +117,7 @@ DIRTY_ADD = 4234
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
 USERNAME = getUsername()
 PASSWORD = getPassword()
-TIME_UPDATE = 2
+TIME_UPDATE = 1
 FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
 
 write_irrProg = [False] * 50
@@ -901,7 +901,7 @@ def send_server():
     for key in cs.allIrrigation:
         if write_irrProg[key - 1] == True and not cs.allIrrigation[key].iszero():
             send_set_irrigation(key)
-            send_set_irrigation_state_status(key)
+            send_set_irrigation_state_status(key, True)
     for key in cs.allInyection:
         if write_ConfIny[key - 1] == True and not cs.allInyection[key].iszero():
             send_set_inyection(key)
@@ -945,12 +945,11 @@ def send_set_irrigation(irrId):
         dataJson = response.json()
         return (dataJson)
 
-def send_set_irrigation_state_status(irrId):
+def send_set_irrigation_state_status(irrId, shouldReset):
     if irrId in cs.allIrrigation:
         irr = cs.allIrrigation[irrId]
         response = requests.get(URL_SERVER + 'requests?set_irrigation_state_status&username=' + USERNAME + '&password=' + PASSWORD +
-            "&program=" + str(irr.program) + "&who=1"
-            "&state=" + str(irr.state) + "&status=-2")
+            "&program=" + str(irr.program) + "&who=1&state=" + str(irr.state) + "&status=" + (-2 if shouldReset else -1))
         irr.status = -1
         dataJson = response.json()
         return (dataJson)
@@ -1426,7 +1425,7 @@ def main_loop():
             for prog in cs.allIrrigation:
                 byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
                 cs.allIrrigation[prog].state = byteList[0]
-                send_set_irrigation_state_status(prog)
+                send_set_irrigation_state_status(prog, False)
         # mandar cada 2 updates, aprox 4s
         if statsCounter % 2 == 0:
             send_terminal_stats()
@@ -1463,7 +1462,7 @@ def main_loop():
                 for x in what["irrigation"]:
                     byteList = read_registers(BASE_PROGRIEGO_STATE+x-1, 1)
                     cs.allIrrigation[x].state = byteList[0]
-                    send_set_irrigation_state_status(x)
+                    send_set_irrigation_state_status(x, True)
                 for x in what["fertilization"]:
                     write_controller_fertilization(x)
                 for x in what["inyection"]:
