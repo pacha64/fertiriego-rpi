@@ -1423,10 +1423,6 @@ def main_loop():
             if write_other:
                 send_other()
                 write_other = False
-            for prog in cs.allIrrigation:
-                byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
-                cs.allIrrigation[prog].state = byteList[0]
-                send_set_irrigation_state_status(prog, False)
         # mandar cada 2 updates, aprox 4s
         if statsCounter % 4 == 0:
             send_terminal_stats()
