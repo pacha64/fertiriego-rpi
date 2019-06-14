@@ -709,7 +709,7 @@ def write_controller_irrigation(pr):
             indice = int((int(elem) - 1) / 8)
             RegistrosValvulas[indice] = RegistrosValvulas[indice] | (2 ** bit)
             i = i + 1
-    RegistrosDays = [0, 0, 0, 0, 0, 0, 0]
+    RegistrosDays = []
     if (ProgRiego.days != ''):
         lista_days = ProgRiego.days.split(',')
         for d in lista_days:
@@ -739,7 +739,8 @@ def write_controller_irrigation(pr):
     byteList.insert(2, int(RegistrosDays[4]))  # Jueves
     byteList.insert(3, int(RegistrosDays[5]))  # Viernes
     byteList.insert(4, int(RegistrosDays[6]))  # Sabado
-    byteList += RegistrosValvulas
+    for counterRegister in range(5, 5+len(RegistrosValvulas)):
+        byteList.insert(counterRegister, int(RegistrosValvulas[counterRegister-5]))
     byteList.append(0)  # Campo Reservado
     Add = BASE_PROGRIEGO + (pr - 1) * 32 + 16
     write_registers(Add, 8, byteList)
