@@ -1433,19 +1433,19 @@ def main_loop():
             send_alarm()
             book_count = get_total_books()
             total_books_server = get_total_books_server()
-            if book_count < total_books_server:
+            if book_count > total_books_server:
                 for i in range(total_books_server+1, book_count+1 if book_count+1 <= 200 else 200):
                     b = get_book(i)
                     send_books(b)
             elif book_count == 0:
                 clear_all_books_server()
-        if statsCounter % 60 == 1:
-            book_count = get_total_books()
-            if book_count < get_total_books_server():
-                clear_all_books_server()
-            for i in range(1, book_count+1 if book_count+1 <= 200 else 200):
-                b = get_book(i)
-                send_books(b)
+        # if statsCounter % 60 == 1:
+        #     book_count = get_total_books()
+        #     if book_count < get_total_books_server():
+        #         clear_all_books_server()
+        #     for i in range(1, book_count+1 if book_count+1 <= 200 else 200):
+        #         b = get_book(i)
+        #         send_books(b)
         statsCounter += 1
         if read_dirty():
             logger.info("modified on controller")
