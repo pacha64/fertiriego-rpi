@@ -1417,14 +1417,14 @@ def main_loop():
             logger.info("login error")                           
     else:
         # mandar manual irr y estado de prog cada 6 updates, aprox 12s
-        if statsCounter % 10 == 0:
+        if statsCounter % 10 == 1:
             read_from_other_configs()
             global write_other
             if write_other:
                 send_other()
                 write_other = False
         # mandar cada 2 updates, aprox 4s
-        if statsCounter % 4 == 0:
+        if statsCounter % 4 == 1:
             send_terminal_stats()
             send_alarm()
             book_count = get_total_books()
@@ -1435,7 +1435,7 @@ def main_loop():
                     send_books(b)
             elif book_count == 0:
                 clear_all_books_server()
-        if statsCounter % 60 == 0:
+        if statsCounter % 60 == 1:
             book_count = get_total_books()
             if book_count < get_total_books_server():
                 clear_all_books_server()
