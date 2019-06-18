@@ -437,6 +437,7 @@ def read_from_controller_irrigation(pr):
 
     byteList = read_registers(BASE_PROGRIEGO_STATE+pr-1, 1)
     ProgRiego.state = byteList[0]
+    ProgRiego.status = ProgRiegoL.status
     logger.info("PROGRAM IRRIGATION DEBUG")
     logger.info(str(ProgRiegoL.__dict__))
     logger.info(str(ProgRiego.__dict__))
