@@ -117,7 +117,7 @@ DIRTY_ADD = 4234
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
 USERNAME = getUsername()
 PASSWORD = getPassword()
-TIME_UPDATE = 1
+TIME_UPDATE = 0.1
 FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
 
 write_irrProg = [False] * 50
