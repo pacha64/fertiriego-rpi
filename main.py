@@ -71,9 +71,9 @@ BASE_MEASURED_FLOW = 0xA24
 # 2 bytes
 BASE_C_PROG = 0x83C
 BASE_P1_P2 = 0x394 # float
-BASE_EC_PH_MEASURED = 0x392 # float
-BASE_EC_PH_ASKED = 0x0224 # float
-BASE_EC_PH_AVERAGE = 0x28F # float
+BASE_EC_PH_MEASURED = 0x392 # float EC y pH
+BASE_EC_PH_ASKED = 0x0224 # float ph y EC
+BASE_EC_PH_AVERAGE = 0x28F # float primero pH y dp EC
 # 96 byes / 48 registers
 # 32 bytes first 2 vars
 BASE_INYECTOR_STATS_1_2 = 0xA04
@@ -1137,11 +1137,11 @@ def read_from_terminal_stats():
     termStats.ec_measured = float(byteList[0])/10
     termStats.ph_measured = float(byteList[1])/10
     byteList = read_registers(BASE_EC_PH_ASKED, 1)
-    termStats.ec_asked = float(byteList[1])/10
     termStats.ph_asked = float(byteList[0])/10
+    termStats.ec_asked = float(byteList[1])/10
     byteList = read_registers(BASE_EC_PH_AVERAGE, 1)
-    termStats.ec_average = float(byteList[0])/10
-    termStats.ph_average = float(byteList[1])/10
+    termStats.ec_average = float(byteList[1])/10
+    termStats.ph_average = float(byteList[0])/10
     byteList = read_registers(BASE_VALVES_STATS, 5)
     termStats.valves = []
     for i in byteList:
