@@ -142,7 +142,7 @@ write_backflush = False
 write_solape = False
 write_other = False
 
-terminalSerial = serial.Serial("COM7", 9600, timeout=0.2)
+terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
 # 
 def fetch_json():
     response = requests.get(
