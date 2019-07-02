@@ -107,6 +107,19 @@ BASE_BOOKS_TOTAL_QTY = 0xC61
 BASE_BOOKS_PH_EC_AVG = 0xC64
 BASE_BOOKS_IRR_FERT = 0xC44
 
+# escribir el primero en 0 y el otro en el prog de riego
+BASE_IRR_INFO = 0x8E5
+BASE_IRR_INFO_SEND_KEY = 0x8E0
+BASE_KEYS_INFO = [0xD2, 0x48, 0x53, 0xF7]
+# 3 bytes, consecutivos 
+BASE_IRR_INFO_INYECTORS = 0xC3D
+# 0: golpes, 2:m3 alto, 3:m3 bajo, 4:hh acumulada, 5:mm acc, 
+BASE_IRR_INFO_KICKS = 0xC20
+# 0: HH, 1:MM, 
+BASE_IRR_INFO_HH_MM_ULTIMO_RIEGO = 0x304
+# 0-1: ph, 2-3:ec ambos float
+BASE_IRR_INFO_PH_EC_PROMEDIO = 0xC35
+
 BASE_START_BUTTON = 0x1BC # setear bit 5
 BASE_STOP_BUTTON = 0x1DC # setear bit 6
 
@@ -118,7 +131,7 @@ URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
 USERNAME = getUsername()
 PASSWORD = getPassword()
 TIME_UPDATE = 0.1
-FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
+FILEPATH_SAVE = "D://repos/emilio/fertiriego-rpi/controller.bin" #"/home/pi/fertiriego-rpi/controller.bin"
 
 write_irrProg = [False] * 50
 write_fertProg = [False] * 20
@@ -129,7 +142,7 @@ write_backflush = False
 write_solape = False
 write_other = False
 
-terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
+terminalSerial = serial.Serial("COM7", 9600, timeout=0.2)
 # 
 def fetch_json():
     response = requests.get(
@@ -1140,8 +1153,8 @@ def read_from_terminal_stats():
     termStats.ph_asked = float(byteList[0])/10
     termStats.ec_asked = float(byteList[1])/10
     byteList = read_registers(BASE_EC_PH_AVERAGE, 1)
-    termStats.ec_average = float(byteList[1])/10
     termStats.ph_average = float(byteList[0])/10
+    termStats.ec_average = float(byteList[1])/10
     byteList = read_registers(BASE_VALVES_STATS, 5)
     termStats.valves = []
     for i in byteList:
@@ -1205,6 +1218,42 @@ def read_from_terminal_stats():
         inyectors.append(is_set(byteList[0], i))
     termStats.actuators.inyectors = ','.join(map(str, inyectors))
     return termStats
+
+def read_from_controller_irr_info():
+    to_return = []
+    for i in range(50):
+        byteList = [0, i+1]
+        write_registers(BASE_IRR_INFO, 1, byteList)
+        write_registers(BASE_IRR_INFO_SEND_KEY, 2, BASE_KEYS_INFO)
+
+        import time
+        isZero = False
+        while isZero is not True:
+            byteList = read_registers(BASE_IRR_INFO_SEND_KEY, 2)
+            if all(v == 0 for v in byteList):
+                isZero = True
+                
+        infoProg = InfoIrrigation()
+        infoProg.prog = i+1
+        infoProg.inyectors = []
+        byteList = read_registers(BASE_IRR_INFO_KICKS, 3)
+        infoProg.kicks = byteList[0]
+        infoProg.total_m3 = byteList[1]*256+byteList[2]
+        infoProg.total_hh = byteList[3]
+        infoProg.total_mm = byteList[4]
+        byteList = read_registers(BASE_IRR_INFO_HH_MM_ULTIMO_RIEGO, 1)
+        infoProg.next_irr_hh = byteList[0]
+        infoProg.next_irr_mm = byteList[1]
+        byteList = read_registers(BASE_IRR_INFO_PH_EC_PROMEDIO, 1)
+        infoProg.ec_avg = byteList[1]/10
+        infoProg.ph_avg = byteList[0]/10
+        byteList = read_registers(BASE_IRR_INFO_INYECTORS, 6)
+        byteList += read_registers(BASE_IRR_INFO_INYECTORS+12, 6)
+        for i in range(0, 8):
+            total_inyected = (byteList[0 + 3*i] * 256 + byteList[1 + 3*i] % 256) + byteList[2 + 3*i] / 100
+            infoProg.inyectors.append(total_inyected)
+        to_return.append(infoProg)
+    return to_return
 
 def send_terminal_stats():
     stats = read_from_terminal_stats()
@@ -1402,7 +1451,7 @@ statsCounter = 0
 
 # logging related
 logger = logging.getLogger()
-handler = RotatingFileHandler("/home/pi/fertiriego.log",maxBytes=1024*1024*400,backupCount=0)
+handler = RotatingFileHandler("D://repos/emilio/fertiriego-rpi/fertiriego.log",maxBytes=1024*1024*400,backupCount=0)
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -1439,6 +1488,24 @@ def main_loop():
                     send_books(b)
             elif book_count == 0:
                 clear_all_books_server()
+        if statsCounter % 500 == 499:
+            to_send = read_from_controller_irr_info()
+            for irr_info in to_send:
+                payload = {'username': USERNAME, 'password': PASSWORD,
+                           'set_info_irr': 1, 'prog': irr_info.prog,
+                           'kicks': irr_info.kicks,
+                           'total_hh': irr_info.total_hh,
+                           'total_mm': irr_info.total_mm,
+                           'total_m3': irr_info.total_m3,
+                           'next_irr_hh': irr_info.next_irr_hh,
+                           'next_irr_mm': irr_info.next_irr_mm,
+                           'ph_avg': irr_info.ph_avg,
+                           'ec_avg': irr_info.ec_avg,
+                           'inyectors': ','.join(map(str, irr_info.inyectors))}
+                response = requests.get(
+                    URL_SERVER +
+                    'requests', payload)
+                dataJson = response.json()
         # if statsCounter % 60 == 1:
         #     book_count = get_total_books()
         #     if book_count < get_total_books_server():

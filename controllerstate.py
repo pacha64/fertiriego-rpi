@@ -299,6 +299,19 @@ class TerminalStats:
         self.valves = [0] * 80
         self.inyectors = []
 
+class InfoIrrigation:
+    def __init__(self):
+        self.prog = 0
+        self.inyectors = [0] * 8
+        self.ec_avg = 0
+        self.ph_avg = 0
+        self.kicks = 0
+        self.total_m3 = 0
+        self.total_hh = 0
+        self.total_mm = 0
+        self.next_irr_hh = 0
+        self.next_irr_mm = 0
+
 class ControllerState:
     def __init__(self):
         self.last_update = 0
