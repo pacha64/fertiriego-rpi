@@ -131,7 +131,7 @@ URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
 USERNAME = getUsername()
 PASSWORD = getPassword()
 TIME_UPDATE = 0.1
-FILEPATH_SAVE = "D://repos/emilio/fertiriego-rpi/controller.bin" #"/home/pi/fertiriego-rpi/controller.bin"
+FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
 
 write_irrProg = [False] * 50
 write_fertProg = [False] * 20
@@ -142,7 +142,7 @@ write_backflush = False
 write_solape = False
 write_other = False
 
-terminalSerial = serial.Serial("COM7", 9600, timeout=0.2)
+terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
 # 
 def fetch_json():
     response = requests.get(
@@ -1451,7 +1451,7 @@ statsCounter = 0
 
 # logging related
 logger = logging.getLogger()
-handler = RotatingFileHandler("D://repos/emilio/fertiriego-rpi/fertiriego.log",maxBytes=1024*1024*400,backupCount=0)
+handler = RotatingFileHandler("/home/pi/fertiriego.log",maxBytes=1024*1024*400,backupCount=0)
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
