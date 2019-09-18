@@ -1449,15 +1449,15 @@ if os.path.isfile(FILEPATH_SAVE):
 tickCounter, tickCounterErr = 0, 0
 statsCounter = 0
 
+try:
+    os.remove("/home/pi/fertiriego.log")
+except OSError:
+    pass
 # logging related
 logger = logging.getLogger()
-handler = RotatingFileHandler("/home/pi/fertiriego.log",maxBytes=1024*1024*400,backupCount=0)
+consoleHandler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
-consoleHandler = logging.StreamHandler()
-consoleHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
 
 def main_loop():
