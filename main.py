@@ -12,6 +12,14 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
+CURRENT_VERSION = 10
+USERNAME = getUsername()
+PASSWORD = getPassword()
+
+requests.get(
+    URL_SERVER + 'requests?running_version' + CURRENT_VERSION +
+    '&username=' + USERNAME + '&password=' + PASSWORD)
+
 # irrigation, fertilization and inyection
 BASE_PROGFERT = 1600 + 8192
 BASE_PROGRIEGO = 0 + 8192
@@ -128,8 +136,6 @@ TOTAL_INY = 8
 TOTAL_IRR = 50
 DIRTY_ADD = 4234
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
-USERNAME = getUsername()
-PASSWORD = getPassword()
 TIME_UPDATE = 0.1
 FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
 
