@@ -15,7 +15,7 @@ from userpass import getUsername, getPassword
 CURRENT_VERSION = 10
 USERNAME = getUsername()
 PASSWORD = getPassword()
-
+URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
 requests.get(
     URL_SERVER + 'requests?running_version' + CURRENT_VERSION +
     '&username=' + USERNAME + '&password=' + PASSWORD)
@@ -135,7 +135,6 @@ TOTAL_FERT = 20
 TOTAL_INY = 8
 TOTAL_IRR = 50
 DIRTY_ADD = 4234
-URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
 TIME_UPDATE = 0.1
 FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
 
