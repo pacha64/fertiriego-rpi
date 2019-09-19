@@ -17,7 +17,7 @@ USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
 requests.get(
-    URL_SERVER + 'requests?running_version' + CURRENT_VERSION +
+    URL_SERVER + 'requests?running_version' + str(CURRENT_VERSION) +
     '&username=' + USERNAME + '&password=' + PASSWORD)
 
 # irrigation, fertilization and inyection
