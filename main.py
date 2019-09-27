@@ -1289,8 +1289,8 @@ def send_terminal_stats():
             '&ec_medium=' + str(stats.ec_measured) +
             '&ph_medium=' + str(stats.ph_measured) +
             '&ec_average=' + str(stats.ec_average) +
-            '&ph_average=' + str(stats.ph_average) +
-            '&valves=' + str(stats.valves))
+            '&ph_average=' + str(stats.ph_average))# +
+            #'&valves=' + str(stats.valves))
         dataJson = response.json()
         response = requests.get(URL_SERVER + 'requests?set_stats_actuators&username=' + USERNAME + '&password=' + PASSWORD +
             '&irrigation_pump=' + str(stats.actuators.irrigation_pump) +
