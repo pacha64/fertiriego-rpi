@@ -12,7 +12,7 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-CURRENT_VERSION = 18
+CURRENT_VERSION = 21
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -1486,12 +1486,11 @@ def main_loop():
             if write_other:
                 send_other()
                 write_other = False
-        # mandar cada 2 updates, aprox 4s
-        if statsCounter == 0:
-            for prog in cs.allIrrigation:
-                byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
-                cs.allIrrigation[prog].state = byteList[0]
-                send_set_irrigation_state_status(prog)
+        # if statsCounter == 0:
+        #     for prog in cs.allIrrigation:
+        #         byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
+        #         cs.allIrrigation[prog].state = byteList[0]
+        #         send_set_irrigation_state_status(prog)
         # if statsCounter % 10 == 1:
         #     for prog in cs.allIrrigation:
         #         byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
