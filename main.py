@@ -11,7 +11,7 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-CURRENT_VERSION = 23
+CURRENT_VERSION = 24
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -146,7 +146,7 @@ write_backflush = False
 write_solape = False
 write_other = False
 
-terminalSerial = serial.Serial("COM13", 9600, timeout=0.2)
+terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
 # 
 def fetch_json():
     response = requests.get(
