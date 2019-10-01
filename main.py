@@ -3,7 +3,6 @@
 '''
 
 import logging
-from logging.handlers import RotatingFileHandler
 import time
 import json
 import requests
@@ -12,7 +11,7 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-CURRENT_VERSION = 21
+CURRENT_VERSION = 22
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -147,7 +146,7 @@ write_backflush = False
 write_solape = False
 write_other = False
 
-terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
+terminalSerial = serial.Serial("COM13", 9600, timeout=0.2)
 # 
 def fetch_json():
     response = requests.get(
@@ -1454,17 +1453,8 @@ if os.path.isfile(FILEPATH_SAVE):
 tickCounter, tickCounterErr = 0, 0
 statsCounter = 0
 
-try:
-    os.remove("/home/pi/fertiriego.log")
-except OSError:
-    pass
-
-
 logger = logging.getLogger()
-handler = RotatingFileHandler("/home/pi/fertiriego.log",maxBytes=1024*1024*400,backupCount=0)
-formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+formatter = logging.Formatter('%(message)s')
 logger.setLevel(logging.DEBUG)
 consoleHandler = logging.StreamHandler()
 consoleHandler.setFormatter(formatter)
@@ -1480,25 +1470,25 @@ def main_loop():
             logger.info("login error")                           
     else:
         # mandar manual irr y estado de prog cada 6 updates, aprox 12s
-        if statsCounter % 10 == 1:
+        if statsCounter % 20 == 1:
             read_from_other_configs()
             global write_other
             if write_other:
                 send_other()
                 write_other = False
-        # if statsCounter == 0:
-        #     for prog in cs.allIrrigation:
-        #         byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
-        #         cs.allIrrigation[prog].state = byteList[0]
-        #         send_set_irrigation_state_status(prog)
-        # if statsCounter % 10 == 1:
-        #     for prog in cs.allIrrigation:
-        #         byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
-        #         old_state = cs.allIrrigation[prog].state
-        #         cs.allIrrigation[prog].state = byteList[0]
-        #         if cs.allIrrigation[prog].state != old_state:
-        #             send_set_irrigation_state_status(prog)
-        if statsCounter % 4 == 1:
+        if statsCounter == 0:
+            for prog in cs.allIrrigation:
+                byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
+                cs.allIrrigation[prog].state = byteList[0]
+                send_set_irrigation_state_status(prog, False)
+        if statsCounter % 5 == 1:
+            for prog in cs.allIrrigation:
+                byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
+                old_state = cs.allIrrigation[prog].state
+                cs.allIrrigation[prog].state = byteList[0]
+                if cs.allIrrigation[prog].state != old_state:
+                    send_set_irrigation_state_status(prog, False)
+        if statsCounter % 10 == 1:
             send_terminal_stats()
             send_alarm()
             book_count = get_total_books()
