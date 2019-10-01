@@ -1,3 +1,6 @@
 *.pyc
 __pycache__/*
 controller.bin
+main-old.py
+fertiriego.log
+userpass
