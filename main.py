@@ -11,7 +11,7 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-CURRENT_VERSION = 22
+CURRENT_VERSION = 23
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -356,11 +356,17 @@ def read_from_alarms():
     cs.alarm.ph_error = is_set(byteList[0], 1)
     cs.alarm.ec_danger = is_set(byteList[0], 2)
     cs.alarm.ph_danger = is_set(byteList[0], 3)
-    byteList = read_registers(BASE_ALARM_FLOW_RAM, 1)
-    cs.alarm.flow_error = is_set(byteList[0], 0)
-    cs.alarm.dangerous_flow = is_set(byteList[0], 1)
-    cs.alarm.no_water = is_set(byteList[0], 2)
-    cs.alarm.irrigation_out_of_controls = is_set(byteList[0], 3)
+    if cs.other.flow_meter_2 == 1:
+        cs.alarm.flow_error = 0
+        cs.alarm.dangerous_flow = 0
+        cs.alarm.no_water = 0
+        cs.alarm.irrigation_out_of_controls = 0
+    else:
+        byteList = read_registers(BASE_ALARM_FLOW_RAM, 1)
+        cs.alarm.flow_error = is_set(byteList[0], 0)
+        cs.alarm.dangerous_flow = is_set(byteList[0], 1)
+        cs.alarm.no_water = is_set(byteList[0], 2)
+        cs.alarm.irrigation_out_of_controls = is_set(byteList[0], 3)
     byteList = read_registers(BASE_ALARM_PRESSURE_RAM, 1)
     cs.alarm.high_pressure = is_set(byteList[0], 0)
     cs.alarm.low_pressure = is_set(byteList[0], 1)
@@ -1488,7 +1494,7 @@ def main_loop():
                 cs.allIrrigation[prog].state = byteList[0]
                 if cs.allIrrigation[prog].state != old_state:
                     send_set_irrigation_state_status(prog, False)
-        if statsCounter % 10 == 1:
+        if statsCounter % 4 == 1:
             send_terminal_stats()
             send_alarm()
             book_count = get_total_books()
@@ -1517,13 +1523,13 @@ def main_loop():
                     URL_SERVER +
                     'requests', payload)
                 dataJson = response.json()
-        # if statsCounter % 60 == 1:
-        #     book_count = get_total_books()
-        #     if book_count < get_total_books_server():
-        #         clear_all_books_server()
-        #     for i in range(1, book_count+1 if book_count+1 <= 200 else 200):
-        #         b = get_book(i)
-        #         send_books(b)
+        if statsCounter % 60 == 1:
+            book_count = get_total_books()
+            if book_count < get_total_books_server():
+                clear_all_books_server()
+            for i in range(1, book_count+1 if book_count+1 <= 200 else 200):
+                b = get_book(i)
+                send_books(b)
         statsCounter += 1
         if read_dirty():
             logger.info("modified on controller")
