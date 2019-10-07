@@ -11,7 +11,7 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-CURRENT_VERSION = 24
+CURRENT_VERSION = 25
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
