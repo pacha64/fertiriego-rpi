@@ -1,7 +1,6 @@
 '''
 (keep-lines "^def .*:")
 '''
-
 import logging
 import time
 import json
@@ -11,7 +10,7 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-CURRENT_VERSION = 27
+CURRENT_VERSION = 28
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -147,7 +146,7 @@ write_solape = False
 write_other = False
 
 terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
-# 
+
 def fetch_json():
     response = requests.get(
         URL_SERVER + 'requests?all&username=' +
@@ -313,7 +312,7 @@ def read_from_solape():
     byteList = []
     offset = 0
     while offset < (80+80)/2:
-        byteList += read_registers(BASE_SOLAPE+offset, 10)
+        byteList += read_registers(BASE_SOLAPE+offset*2, 10)
         offset += 10
     flow, solape, time = [], [], []
     i = 0
@@ -929,7 +928,6 @@ def send_server():
     for key in cs.allIrrigation:
         if write_irrProg[key - 1] == True and not cs.allIrrigation[key].iszero():
             send_set_irrigation(key)
-            send_set_irrigation_state_status(key, False)
     for key in cs.allInyection:
         if write_ConfIny[key - 1] == True and not cs.allInyection[key].iszero():
             send_set_inyection(key)
@@ -972,6 +970,17 @@ def send_set_irrigation(irrId):
             "&time_between_2=" + str(irr.time_between_2) + "&valves=" + str(irr.valves) + "&days=" + str(irr.days))
         dataJson = response.json()
         return (dataJson)
+
+def send_set_irrigation_state_status_all():
+    to_send = []
+    for x in range(0, 50):
+        byteList = read_registers(BASE_PROGRIEGO_STATE+x, 1)
+        to_send.append(byteList[0])
+    to_send = ','.join(str(e) for e in to_send)
+    url = URL_SERVER + 'requests?set_irrigation_state_all=1&username=' + USERNAME + '&password=' + PASSWORD + "&who=1&state=" + to_send
+    response = requests.get(url)
+    dataJson = response.json()
+    return (dataJson)
 
 def send_set_irrigation_state_status(irrId, shouldReset):
     if irrId in cs.allIrrigation:
@@ -1482,18 +1491,8 @@ def main_loop():
             if write_other:
                 send_other()
                 write_other = False
-        if statsCounter == 0:
-            for prog in cs.allIrrigation:
-                byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
-                cs.allIrrigation[prog].state = byteList[0]
-                send_set_irrigation_state_status(prog, False)
-        if statsCounter % 5 == 1:
-            for prog in cs.allIrrigation:
-                byteList = read_registers(BASE_PROGRIEGO_STATE+prog-1, 1)
-                old_state = cs.allIrrigation[prog].state
-                cs.allIrrigation[prog].state = byteList[0]
-                if cs.allIrrigation[prog].state != old_state:
-                    send_set_irrigation_state_status(prog, False)
+        if statsCounter % 6 == 0:
+            send_set_irrigation_state_status_all()
         if statsCounter % 4 == 1:
             send_terminal_stats()
             send_alarm()
@@ -1525,11 +1524,12 @@ def main_loop():
                 dataJson = response.json()
         if statsCounter % 60 == 1:
             book_count = get_total_books()
-            if book_count < get_total_books_server():
+            book_count_server = get_total_books_server()
+            if book_count < book_count_server:
                 clear_all_books_server()
-            for i in range(1, book_count+1 if book_count+1 <= 200 else 200):
-                b = get_book(i)
-                send_books(b)
+                for i in range(1, book_count+1 if book_count+1 <= 200 else 200):
+                    b = get_book(i)
+                    send_books(b)
         statsCounter += 1
         if read_dirty():
             logger.info("modified on controller")
