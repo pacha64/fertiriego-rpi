@@ -10,7 +10,9 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-CURRENT_VERSION = 28
+USE_RPI = True
+
+CURRENT_VERSION = 29
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -133,8 +135,11 @@ TOTAL_FERT = 20
 TOTAL_INY = 8
 TOTAL_IRR = 50
 DIRTY_ADD = 4234
-TIME_UPDATE = 0.1
+TIME_UPDATE = 0.05
+
 FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
+if not USE_RPI:
+    FILEPATH_SAVE = "D:/controller.bin"
 
 write_irrProg = [False] * 50
 write_fertProg = [False] * 20
@@ -145,7 +150,11 @@ write_backflush = False
 write_solape = False
 write_other = False
 
-terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
+terminalSerial = None
+if USE_RPI:
+    terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
+else:
+    terminalSerial = serial.Serial("COM7", 9600, timeout=0.2)
 
 def fetch_json():
     response = requests.get(
@@ -727,7 +736,7 @@ def write_controller_irrigation(pr):
     lista_Valv = []
     ProgRiego = cs.allIrrigation[pr]
     RegistrosValvulas = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    if (ProgRiego.valves != ''):
+    if ProgRiego.valves != '' and ProgRiego.valves != None:
         lista_Valv = ProgRiego.valves.split(',')
         i = 0
         for elem in lista_Valv:
@@ -1592,8 +1601,8 @@ def main_loop():
 
 if __name__ == "__main__":
     while True:
-        main_loop()
         try:
+            main_loop()
             tickCounterErr = 0
         except Exception as ex:
             logger.info("exception, restarting")
