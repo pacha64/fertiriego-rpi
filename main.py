@@ -10,7 +10,7 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-USE_RPI = True
+USE_RPI = False
 
 CURRENT_VERSION = 30
 USERNAME = getUsername()
@@ -1600,23 +1600,23 @@ def main_loop():
                 if what["solape"]:
                     write_controller_solape()
 
-def send_pulse_gpio(arg):
+def send_pulse_gpio():
     import RPi.GPIO
     while True:
-        GPIO.output(4, True)
+        RPi.GPIO.output(4, True)
         sleep(0.5)
-        GPIO.output(4, False)
+        RPi.GPIO.output(4, False)
         sleep(0.5)
 
 if __name__ == "__main__":
     try:
         import RPi.GPIO
         from time import sleep 
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BCM) 
-        GPIO.setup(17, GPIO.OUT)
+        RPi.GPIO.setwarnings(False)
+        RPi.GPIO.setmode(RPi.GPIO.BCM) 
+        RPi.GPIO.setup(4, RPi.GPIO.OUT)
         from threading import Thread
-        thread = Thread(target = send_pulse_gpio, args=None)
+        thread = Thread(target = send_pulse_gpio)
         thread.start()
     except:
         pass
