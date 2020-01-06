@@ -12,7 +12,7 @@ from userpass import getUsername, getPassword
 
 USE_RPI = True
 
-CURRENT_VERSION = 29
+CURRENT_VERSION = 30
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -888,9 +888,9 @@ def write_controller_backflush():
     byteList.append(backflush.time_between_station_sec)
     byteList.append(backflush.pause_between_filtering_secs)
     byteList.append(backflush.amount_of_filters)
+    byteList.append(backflush.times_wash_before_pd_alarm)
     byteList.append(backflush.delay_differential_pressure)
     byteList.append(backflush.wait_after_sustain)
-    byteList.append(backflush.times_wash_before_pd_alarm)
     write_registers(BASE_ADDRETROLAVADO, 5, byteList)
 
 def set_bit(v, index, x):
@@ -1071,12 +1071,13 @@ def send_backflush():
     bf = cs.back_flushing
     response = requests.get(URL_SERVER + 'requests?set_backflushing_config&username=' + USERNAME + '&password=' + PASSWORD +
         '&who=1&time_between_station_sec=' + str(bf.time_between_station_sec) +
+        '&time_between_station_min=' + str(bf.time_between_station_min) +
         '&pause_between_filtering_secs=' + str(bf.pause_between_filtering_secs) +
         '&amount_of_filters=' + str(bf.amount_of_filters) +
         '&difference_backflush_kg=' + str(bf.difference_backflush_kg) +
-        '&delay_differential_pressure=' + str(bf.delay_differential_pressure) +
+        '&delay_differential_sustain=' + str(bf.delay_differential_pressure) +
         '&wait_after_sustain=' + str(bf.wait_after_sustain) +
-        '&times_wash_before_pd_alarm=' + str(bf.times_wash_before_pd_alarm) +
+        '&times_flush_after_sustain_alarm=' + str(bf.times_wash_before_pd_alarm) +
         '&time_between_flushing_hours=' + str(bf.time_between_flushing_hours) +
         '&time_between_flushing_minutes=' + str(bf.time_between_flushing_minutes))
     dataJson = response.json()
@@ -1599,7 +1600,27 @@ def main_loop():
                 if what["solape"]:
                     write_controller_solape()
 
+def send_pulse_gpio(arg):
+    import RPi.GPIO
+    while True:
+        GPIO.output(4, True)
+        sleep(0.5)
+        GPIO.output(4, False)
+        sleep(0.5)
+
 if __name__ == "__main__":
+    try:
+        import RPi.GPIO
+        from time import sleep 
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM) 
+        GPIO.setup(17, GPIO.OUT)
+        from threading import Thread
+        thread = Thread(target = send_pulse_gpio, args=None)
+        thread.start()
+    except:
+        pass
+    
     while True:
         try:
             main_loop()
