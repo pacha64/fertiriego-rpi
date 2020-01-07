@@ -12,7 +12,7 @@ from userpass import getUsername, getPassword
 
 USE_RPI = True
 
-CURRENT_VERSION = 31
+CURRENT_VERSION = 32
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -1602,11 +1602,13 @@ def main_loop():
 
 def send_pulse_gpio():
     import RPi.GPIO
-    while True:
+    while pulses_thread_run:
         RPi.GPIO.output(4, True)
         sleep(0.5)
         RPi.GPIO.output(4, False)
         sleep(0.5)
+
+pulses_thread_run = True
 
 if __name__ == "__main__":
     try:
@@ -1631,5 +1633,6 @@ if __name__ == "__main__":
             tickCounterErr += 1
             if tickCounterErr >= 5:
                 logger.info("exception count too high, exiting")
+                pulses_thread_run = False
                 exit()
         time.sleep(TIME_UPDATE)
