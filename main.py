@@ -12,7 +12,7 @@ from userpass import getUsername, getPassword
 
 USE_RPI = True
 
-CURRENT_VERSION = 35
+CURRENT_VERSION = 36
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -153,9 +153,9 @@ write_other = False
 
 terminalSerial = None
 if USE_RPI:
-    terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.5)
+    terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
 else:
-    terminalSerial = serial.Serial("COM7", 9600, timeout=0.5)
+    terminalSerial = serial.Serial("COM7", 9600, timeout=0.2)
 
 def fetch_json():
     response = requests.get(
