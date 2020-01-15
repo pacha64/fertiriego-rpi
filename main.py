@@ -136,6 +136,7 @@ TOTAL_INY = 8
 TOTAL_IRR = 50
 DIRTY_ADD = 4234
 TIME_UPDATE = 0.05
+COUNTER_SERIAL_EXCEPTION = 100
 
 FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
 if not USE_RPI:
@@ -152,9 +153,9 @@ write_other = False
 
 terminalSerial = None
 if USE_RPI:
-    terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
+    terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.5)
 else:
-    terminalSerial = serial.Serial("COM7", 9600, timeout=0.2)
+    terminalSerial = serial.Serial("COM7", 9600, timeout=0.5)
 
 def fetch_json():
     response = requests.get(
@@ -212,7 +213,8 @@ def read_registers(Add, nRegs):
     byteList = byteList + listaCRC  # Le agrega los bytes de CRC
     incoming = []
     Total_in = nRegs * 2 + 5
-    while (len(incoming) < (Total_in)):
+    count_serial_exception = 0
+    while (len(incoming) < (Total_in)) and count_serial_exception < COUNTER_SERIAL_EXCEPTION:
         terminalSerial.write(byteList)
         terminalSerial.flush()
         incoming = terminalSerial.read(Total_in)
@@ -220,6 +222,9 @@ def read_registers(Add, nRegs):
         CRC_in = BytesIn[(Total_in - 2):Total_in]
         del BytesIn[-2:]  # borra los 2 ultimos elementos
         listaCRC = calculate_crc(BytesIn)
+        count_serial_exception += 1
+    if count_serial_exception >= count_serial_exception:
+        raise Exception("Serial communication error")
     if (listaCRC == CRC_in):
         del BytesIn[0:3]  # borra del 0 al 3 no inclusive
         return BytesIn
@@ -236,8 +241,9 @@ def write_registers(Add, nRegs, byteList):
     # Le agrega los bytes de CRC
     incoming = []
     Total_in = 8
+    count_serial_exception = 0
     # Cuando Escribis Recibis 8 Bytes Fijos
-    while (len(incoming) < (Total_in)):
+    while (len(incoming) < (Total_in))and count_serial_exception < COUNTER_SERIAL_EXCEPTION:
         terminalSerial.write(byteList)
         terminalSerial.flush()
         incoming = terminalSerial.read(Total_in)
@@ -245,6 +251,9 @@ def write_registers(Add, nRegs, byteList):
         CRC_in = BytesIn[(Total_in - 2):Total_in]
         del BytesIn[-2:]  # borra los 2 ultimos elementos
         listaCRC = calculate_crc(BytesIn)
+        count_serial_exception += 1
+    if count_serial_exception >= count_serial_exception:
+        raise Exception("Serial communication error")
     if (listaCRC == CRC_in):
         return True
     else:
