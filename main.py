@@ -12,7 +12,7 @@ from userpass import getUsername, getPassword
 
 USE_RPI = True
 
-CURRENT_VERSION = 38
+CURRENT_VERSION = 39
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -1641,9 +1641,6 @@ if __name__ == "__main__":
         except Exception as ex:
             logger.info("exception, restarting")
             logger.exception(ex)
-            tickCounterErr += 1
-            if tickCounterErr >= 5:
-                logger.info("exception count too high, exiting")
-                pulses_thread_run = False
-                exit()
+            pulses_thread_run = False
+            exit()
         time.sleep(TIME_UPDATE)
