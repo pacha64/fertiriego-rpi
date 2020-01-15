@@ -12,7 +12,7 @@ from userpass import getUsername, getPassword
 
 USE_RPI = True
 
-CURRENT_VERSION = 36
+CURRENT_VERSION = 37
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -136,7 +136,7 @@ TOTAL_INY = 8
 TOTAL_IRR = 50
 DIRTY_ADD = 4234
 TIME_UPDATE = 0.05
-COUNTER_SERIAL_EXCEPTION = 100
+#COUNTER_SERIAL_EXCEPTION = 100
 
 FILEPATH_SAVE = "/home/pi/fertiriego-rpi/controller.bin"
 if not USE_RPI:
@@ -213,8 +213,7 @@ def read_registers(Add, nRegs):
     byteList = byteList + listaCRC  # Le agrega los bytes de CRC
     incoming = []
     Total_in = nRegs * 2 + 5
-    count_serial_exception = 0
-    while (len(incoming) < (Total_in)) and count_serial_exception < COUNTER_SERIAL_EXCEPTION:
+    while (len(incoming) < (Total_in)):
         terminalSerial.write(byteList)
         terminalSerial.flush()
         incoming = terminalSerial.read(Total_in)
@@ -222,9 +221,6 @@ def read_registers(Add, nRegs):
         CRC_in = BytesIn[(Total_in - 2):Total_in]
         del BytesIn[-2:]  # borra los 2 ultimos elementos
         listaCRC = calculate_crc(BytesIn)
-        count_serial_exception += 1
-    if count_serial_exception >= count_serial_exception:
-        raise Exception("Serial communication error")
     if (listaCRC == CRC_in):
         del BytesIn[0:3]  # borra del 0 al 3 no inclusive
         return BytesIn
@@ -241,9 +237,8 @@ def write_registers(Add, nRegs, byteList):
     # Le agrega los bytes de CRC
     incoming = []
     Total_in = 8
-    count_serial_exception = 0
     # Cuando Escribis Recibis 8 Bytes Fijos
-    while (len(incoming) < (Total_in))and count_serial_exception < COUNTER_SERIAL_EXCEPTION:
+    while (len(incoming) < (Total_in)):
         terminalSerial.write(byteList)
         terminalSerial.flush()
         incoming = terminalSerial.read(Total_in)
@@ -251,9 +246,6 @@ def write_registers(Add, nRegs, byteList):
         CRC_in = BytesIn[(Total_in - 2):Total_in]
         del BytesIn[-2:]  # borra los 2 ultimos elementos
         listaCRC = calculate_crc(BytesIn)
-        count_serial_exception += 1
-    if count_serial_exception >= count_serial_exception:
-        raise Exception("Serial communication error")
     if (listaCRC == CRC_in):
         return True
     else:
