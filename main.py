@@ -12,7 +12,7 @@ from userpass import getUsername, getPassword
 
 USE_RPI = True
 
-CURRENT_VERSION = 41
+CURRENT_VERSION = 42
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -1525,7 +1525,7 @@ def main_loop():
                     send_books(b)
             elif book_count == 0:
                 clear_all_books_server()
-        if statsCounter % 500 == 499:
+        if statsCounter % 200 == 199:
             to_send = read_from_controller_irr_info()
             for irr_info in to_send:
                 payload = {'username': USERNAME, 'password': PASSWORD,
