@@ -12,9 +12,9 @@ from userpass import getUsername, getPassword
 
 USE_RPI = True
 
-CONNECTION_TIMEOUT = 10
+CONNECTION_TIMEOUT = 15
 
-CURRENT_VERSION = 46
+CURRENT_VERSION = 47
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -1168,14 +1168,14 @@ def send_alarm():
         '&flow_error=' + str(alarm.flow_error) +
         '&no_water=' + str(alarm.no_water) +
         '&dangerous_flow=' + str(alarm.dangerous_flow) +
-        '&irrigation_out_of_controls=' + str(alarm.irrigation_out_of_controls))
+        '&irrigation_out_of_controls=' + str(alarm.irrigation_out_of_controls), timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson
 
 def send_power_buttons():
     read_from_alarms()
     alarm = cs.alarm
-    response = requests.get(URL_SERVER + 'requests?set_power_buttons&username=' + USERNAME + '&password=' + PASSWORD + '&who=1&stop_button=0&start_button=0')
+    response = requests.get(URL_SERVER + 'requests?set_power_buttons&username=' + USERNAME + '&password=' + PASSWORD + '&who=1&stop_button=0&start_button=0', timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson
 
@@ -1343,7 +1343,7 @@ def send_info_irr_thread(to_send):
                     'inyectors': ','.join(map(str, irr_info.inyectors))}
         response = requests.get(
             URL_SERVER +
-            'requests', payload)
+            'requests', payload, timeout=CONNECTION_TIMEOUT)
         dataJson = response.json()
 
 def send_terminal_stats_thread(stats):
@@ -1381,7 +1381,7 @@ def send_terminal_stats_thread(stats):
         '&fertilization_pump=' + str(stats.actuators.fertilization_pump) +
         '&blender=' + str(stats.actuators.blender) +
         '&alarm=' + str(stats.actuators.alarm) +
-        '&inyectors=' + stats.actuators.inyectors)
+        '&inyectors=' + stats.actuators.inyectors, timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     response = requests.get(URL_SERVER + 'requests?set_filters_stats&username=' + USERNAME + '&password=' + PASSWORD +
         '&filters=' + stats.filters.filters +
@@ -1390,7 +1390,7 @@ def send_terminal_stats_thread(stats):
         '&backwash_reason=' + str(stats.filters.backwash_reason) +
         '&next_backwash_min=' + str(stats.filters.next_backwash_min) +
         '&next_backwash_hour=' + str(stats.filters.next_backwash_hour) +
-        '&backwash_manual=-1&backwash_manual_now=-1')
+        '&backwash_manual=-1&backwash_manual_now=-1', timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     for i in stats.inyectors:
         response = requests.get(URL_SERVER + 'requests?set_inyector_stats&username=' + USERNAME + '&password=' + PASSWORD +
@@ -1399,7 +1399,7 @@ def send_terminal_stats_thread(stats):
             '&prop_required_ec_ph=' + str(i.prop_required_ec_ph) +
             '&required_flow=' + str(i.required_flow) +
             '&required_volume=' + str(i.required_volume) +
-            '&total_inyected=' + str(i.total_inyected))
+            '&total_inyected=' + str(i.total_inyected), timeout=CONNECTION_TIMEOUT)
     return dataJson
 
 def send_terminal_stats():
@@ -1421,7 +1421,7 @@ def get_total_books_server():
         'requests?get_book_count&username=' +
         USERNAME +
         '&password=' +
-        PASSWORD)
+        PASSWORD, timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson['count']
 
@@ -1431,7 +1431,7 @@ def clear_all_books_server():
         'requests?clear_books&username=' +
         USERNAME +
         '&password=' +
-        PASSWORD)
+        PASSWORD, timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson['error']
 
@@ -1454,7 +1454,7 @@ def send_books(book):
         "&ph_avg=" + str(book.ph_avg) +
         "&fertilization_program=" + str(book.fert_prog) +
         "&irrigation_program=" + str(book.irr_prog) +
-        "&inyectors=" + inyectors)
+        "&inyectors=" + inyectors, timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson['error']
 
@@ -1692,7 +1692,7 @@ if __name__ == "__main__":
                 payload = {'username': USERNAME, 'password': PASSWORD, 'set_exception' : 1, 'description': str(ex)}
                 response = requests.get(
                     URL_SERVER +
-                    'requests', payload)
+                    'requests', payload, timeout=CONNECTION_TIMEOUT)
             except Exception as ex:
                 pass
             pulses_thread_run = False
