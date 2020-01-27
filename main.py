@@ -10,7 +10,7 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-USE_RPI = False
+USE_RPI = True
 
 CONNECTION_TIMEOUT = 10
 
