@@ -12,7 +12,7 @@ from userpass import getUsername, getPassword
 
 USE_RPI = True
 
-CURRENT_VERSION = 43
+CURRENT_VERSION = 44
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
