@@ -10,15 +10,17 @@ import serial
 from controllerstate import *
 from userpass import getUsername, getPassword
 
-USE_RPI = True
+USE_RPI = False
 
-CURRENT_VERSION = 44
+CONNECTION_TIMEOUT = 10
+
+CURRENT_VERSION = 45
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
 requests.get(
     URL_SERVER + 'requests?running_version=' + str(CURRENT_VERSION) +
-    '&username=' + USERNAME + '&password=' + PASSWORD)
+    '&username=' + USERNAME + '&password=' + PASSWORD, timeout=CONNECTION_TIMEOUT)
 
 # irrigation, fertilization and inyection
 BASE_PROGFERT = 1600 + 8192
@@ -157,12 +159,19 @@ terminalSerial = None
 if USE_RPI:
     terminalSerial = serial.Serial("/dev/ttyUSB0", 9600, timeout=0.2)
 else:
-    terminalSerial = serial.Serial("COM7", 9600, timeout=0.2)
+    terminalSerial = serial.Serial("COM9", 9600, timeout=0.2)
+
+pulses_thread_run = True
+extra_reset_board = False
+extra_sub_monitor = False
+extra_humidity_sensor = False
+finished_send_stats = None
+finished_send_info_irr = None
 
 def fetch_json():
     response = requests.get(
         URL_SERVER + 'requests?all&username=' +
-        USERNAME + '&password=' + PASSWORD)
+        USERNAME + '&password=' + PASSWORD, timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return (dataJson)
 
@@ -172,7 +181,7 @@ def fetch_last_update():
         'requests?updated_when_server&username=' +
         USERNAME +
         '&password=' +
-        PASSWORD)
+        PASSWORD, timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return (dataJson['update'], dataJson['updated_by'])
 
@@ -189,8 +198,15 @@ def check_login():
         'login?username=' +
         USERNAME +
         '&password=' +
-        PASSWORD)
+        PASSWORD, timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
+    global extra_reset_board, extra_sub_monitor, extra_humidity_sensor
+    if 'extra_reset_board' in dataJson:
+        extra_reset_board = dataJson['extra_reset_board']
+    if 'extra_sub_monitor' in dataJson:
+        extra_sub_monitor = dataJson['extra_sub_monitor']
+    if 'extra_humidity_sensor' in dataJson:
+        extra_humidity_sensor = dataJson['extra_humidity_sensor']
     return (dataJson['ok'])
 
 def read_dirty():
@@ -971,7 +987,7 @@ def send_set_fertilization(pf):
             "&program=" + str(fert.program) + "&who=1" + "&value_1=" + str(fert.values_1) +
             "&value_2=" + str(fert.values_2) + "&value_3=" + str(fert.values_3) + "&value_4=" + str(fert.values_4) +
             "&value_5=" + str(fert.values_5) + "&value_6=" + str(fert.values_6) + "&value_7=" + str(fert.values_7) +
-            "&value_8=" + str(fert.values_8) + "&ec=" + str(fert.ec) + "&ph=" + str(fert.ph))
+            "&value_8=" + str(fert.values_8) + "&ec=" + str(fert.ec) + "&ph=" + str(fert.ph), timeout=CONNECTION_TIMEOUT)
         dataJson = response.json()
         return (dataJson)
 
@@ -987,7 +1003,7 @@ def send_set_irrigation(irrId):
             "&kicks=" + str(irr.kicks) + "&fertilization_program=" + str(irr.fertilization_program) +
             "&condition_program=" + str(irr.condition_program) + "&time_start_1=" + str(irr.time_start_1) +
             "&time_start_2=" + str(irr.time_start_2) + "&time_between_1=" + str(irr.time_between_1) +
-            "&time_between_2=" + str(irr.time_between_2) + "&valves=" + str(irr.valves) + "&days=" + str(irr.days))
+            "&time_between_2=" + str(irr.time_between_2) + "&valves=" + str(irr.valves) + "&days=" + str(irr.days), timeout=CONNECTION_TIMEOUT)
         dataJson = response.json()
         return (dataJson)
 
@@ -998,7 +1014,18 @@ def send_set_irrigation_state_status_all():
         to_send.append(byteList[0])
     to_send = ','.join(str(e) for e in to_send)
     url = URL_SERVER + 'requests?set_irrigation_state_all=1&username=' + USERNAME + '&password=' + PASSWORD + "&who=1&state=" + to_send
-    response = requests.get(url)
+    response = requests.get(url, timeout=CONNECTION_TIMEOUT)
+    dataJson = response.json()
+    return (dataJson)
+
+def send_all_stats():
+    to_send = []
+    for x in range(0, 50):
+        byteList = read_registers(BASE_PROGRIEGO_STATE+x, 1)
+        to_send.append(byteList[0])
+    to_send = ','.join(str(e) for e in to_send)
+    url = URL_SERVER + 'requests?set_irrigation_state_all=1&username=' + USERNAME + '&password=' + PASSWORD + "&who=1&state=" + to_send
+    response = requests.get(url, timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return (dataJson)
 
@@ -1007,7 +1034,7 @@ def send_set_irrigation_state_status(irrId, shouldReset):
         irr = cs.allIrrigation[irrId]
         irr.status = -2 if shouldReset else -1
         response = requests.get(URL_SERVER + 'requests?set_irrigation_state_status&username=' + USERNAME + '&password=' + PASSWORD +
-            "&program=" + str(irr.program) + "&who=1&state=" + str(irr.state) + "&status=" + str(irr.status))
+            "&program=" + str(irr.program) + "&who=1&state=" + str(irr.state) + "&status=" + str(irr.status), timeout=CONNECTION_TIMEOUT)
         dataJson = response.json()
         return (dataJson)
 
@@ -1017,7 +1044,7 @@ def send_set_inyection(inyId):
         response = requests.get(URL_SERVER + 'requests?set_inyector&username=' + USERNAME + '&password=' + PASSWORD +
             "&program=" + str(iny.program) + "&who=1&flow=" + str(iny.flow) +
             "&time_on=" + str(iny.time_on) + "&litres_pulse=" + str(iny.litres_pulse) + "&max_deviation=" + str(iny.max_deviation) +
-            "&simulator=" + str(iny.simulator) + "&function=" + str(iny.function))
+            "&simulator=" + str(iny.simulator) + "&function=" + str(iny.function), timeout=CONNECTION_TIMEOUT)
         dataJson = response.json()
         return (dataJson)
 
@@ -1060,7 +1087,7 @@ def send_set_config_alarms():
         "&coefficient_correction_ph_more_05=" + str(cA.coefficient_correction_ph_more_05) +
         "&coefficient_correction_ph_more_03=" + str(cA.coefficient_correction_ph_more_03) +
         "&secs_first_ec_correction=" + str(cA.secs_first_ec_correction) +
-        "&secs_first_ph_correction=" + str(cA.secs_first_ph_correction))
+        "&secs_first_ph_correction=" + str(cA.secs_first_ph_correction), timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return (dataJson)
 
@@ -1074,7 +1101,7 @@ def send_config_input_output():
         "&valves49to64=" + str(cIO.valves49to64) + "&valves65to80=" + str(cIO.valves65to80) +
         "&analog_input_1=" + str(cIO.analog_input_1) + "&analog_input_2=" + str(cIO.analog_input_2) +
         "&analog_input_3=" + str(cIO.analog_input_3) + "&analog_input_4=" + str(cIO.analog_input_4) +
-        "&analog_input_5=" + str(cIO.analog_input_5))
+        "&analog_input_5=" + str(cIO.analog_input_5), timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson
   
@@ -1090,13 +1117,13 @@ def send_backflush():
         '&wait_after_sustain=' + str(bf.wait_after_sustain) +
         '&times_flush_after_sustain_alarm=' + str(bf.times_wash_before_pd_alarm) +
         '&time_between_flushing_hours=' + str(bf.time_between_flushing_hours) +
-        '&time_between_flushing_minutes=' + str(bf.time_between_flushing_minutes))
+        '&time_between_flushing_minutes=' + str(bf.time_between_flushing_minutes), timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson
 
 def send_solape():
     solape = cs.solape
-    response = requests.get(URL_SERVER + 'requests?set_solape_config&username=' + USERNAME + '&password=' + PASSWORD + '&who=1&solape=' + solape.solape + '&time=' + solape.time + '&flow=' + solape.flow)
+    response = requests.get(URL_SERVER + 'requests?set_solape_config&username=' + USERNAME + '&password=' + PASSWORD + '&who=1&solape=' + solape.solape + '&time=' + solape.time + '&flow=' + solape.flow, timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson
 
@@ -1104,7 +1131,7 @@ def send_backwash_buttons():
     response = requests.get(URL_SERVER + 'requests?set_backwash_buttons' +
     '&username=' + USERNAME + '&password=' + PASSWORD + '&who=1' +
     '&button_backwash_now=' + str(cs.other.button_backwash_now) +
-    '&button_backwash_cancel=' + str(cs.other.button_backwash_cancel))
+    '&button_backwash_cancel=' + str(cs.other.button_backwash_cancel), timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson
 
@@ -1122,7 +1149,7 @@ def send_other():
         '&manual_irrigation_units=' + str(other.manual_irrigation_units) +
         '&manual_irrigation_water_1=' + str(other.manual_irrigation_water_1) +
         '&manual_irrigation_water_2=' + str(other.manual_irrigation_water_2) +
-        '&manual_irrigation_program=' + str(other.manual_irrigation_program))
+        '&manual_irrigation_program=' + str(other.manual_irrigation_program), timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson
 
@@ -1261,18 +1288,22 @@ def read_from_terminal_stats():
 
 def read_from_controller_irr_info():
     to_return = []
+    import time
+    count_sec = 0
+    count_sec_read = 0
     for i in range(50):
         byteList = [0, i+1]
         write_registers(BASE_IRR_INFO, 1, byteList)
         write_registers(BASE_IRR_INFO_SEND_KEY, 2, BASE_KEYS_INFO)
 
         import time
+        count = 0
         isZero = False
         while isZero is not True:
+            count += 1
             byteList = read_registers(BASE_IRR_INFO_SEND_KEY, 2)
             if all(v == 0 for v in byteList):
                 isZero = True
-                
         infoProg = InfoIrrigation()
         infoProg.prog = i+1
         infoProg.inyectors = []
@@ -1295,63 +1326,90 @@ def read_from_controller_irr_info():
         to_return.append(infoProg)
     return to_return
 
+def send_info_irr_thread(to_send):
+    for irr_info in to_send:
+        if not pulses_thread_run:
+            break
+        payload = {'username': USERNAME, 'password': PASSWORD,
+                    'set_info_irr': 1, 'prog': irr_info.prog,
+                    'kicks': irr_info.kicks,
+                    'total_hh': irr_info.total_hh,
+                    'total_mm': irr_info.total_mm,
+                    'total_m3': irr_info.total_m3,
+                    'next_irr_hh': irr_info.next_irr_hh,
+                    'next_irr_mm': irr_info.next_irr_mm,
+                    'ph_avg': irr_info.ph_avg,
+                    'ec_avg': irr_info.ec_avg,
+                    'inyectors': ','.join(map(str, irr_info.inyectors))}
+        response = requests.get(
+            URL_SERVER +
+            'requests', payload)
+        dataJson = response.json()
+
+def send_terminal_stats_thread(stats):
+    response = requests.get(URL_SERVER + 'requests?set_stats&username=' + USERNAME + '&password=' + PASSWORD +
+        '&irrigation_program=' + str(stats.irrigation_program) +
+        '&fertilization_program=' + str(stats.fertilization_program) +
+        '&next_irrigation_program=' + str(stats.next_irrigation_program) +
+        '&irrigation_1=' + str(stats.irrigation_1) +
+        '&irrigation_2=' + str(stats.irrigation_2) +
+        '&preirrigation_1=' + str(stats.preirrigation_1) +
+        '&preirrigation_2=' + str(stats.preirrigation_2) +
+        '&postirrigation_1=' + str(stats.postirrigation_1) +
+        '&postirrigation_2=' + str(stats.postirrigation_2) +
+        '&units=' + str(stats.units) +
+        '&irrigation_time_1=' + str(stats.irrigation_time_1) +
+        '&irrigation_time_2=' + str(stats.irrigation_time_2) +
+        '&irrigation_time_3=' + str(stats.irrigation_time_3) +
+        '&cubic_meters=' + str(stats.cubic_meters) +
+        '&irrigation_before_suspend_1=' + str(stats.irrigation_before_suspend_1) +
+        '&irrigation_before_suspend_2=' + str(stats.irrigation_before_suspend_2) +
+        '&flow_measured_m3_h=' + str(stats.flow_measured_m3_h) +
+        '&p1_kg=' + str(stats.p1) +
+        '&p2_kg=' + str(stats.p2) +
+        '&condition_program=' + str(stats.c_prog) +
+        '&ec_asked=' + str(stats.ec_asked) +
+        '&ph_asked=' + str(stats.ph_asked) +
+        '&ec_medium=' + str(stats.ec_measured) +
+        '&ph_medium=' + str(stats.ph_measured) +
+        '&ec_average=' + str(stats.ec_average) +
+        '&ph_average=' + str(stats.ph_average) +
+        '&valves=' + str(stats.valves))
+    dataJson = response.json()
+    response = requests.get(URL_SERVER + 'requests?set_stats_actuators&username=' + USERNAME + '&password=' + PASSWORD +
+        '&irrigation_pump=' + str(stats.actuators.irrigation_pump) +
+        '&fertilization_pump=' + str(stats.actuators.fertilization_pump) +
+        '&blender=' + str(stats.actuators.blender) +
+        '&alarm=' + str(stats.actuators.alarm) +
+        '&inyectors=' + stats.actuators.inyectors)
+    dataJson = response.json()
+    response = requests.get(URL_SERVER + 'requests?set_filters_stats&username=' + USERNAME + '&password=' + PASSWORD +
+        '&filters=' + stats.filters.filters +
+        '&sustain_valve=' + str(stats.filters.sustain_valve) +
+        '&backwash_state=' + str(stats.filters.backwash_state) +
+        '&backwash_reason=' + str(stats.filters.backwash_reason) +
+        '&next_backwash_min=' + str(stats.filters.next_backwash_min) +
+        '&next_backwash_hour=' + str(stats.filters.next_backwash_hour) +
+        '&backwash_manual=-1&backwash_manual_now=-1')
+    dataJson = response.json()
+    for i in stats.inyectors:
+        response = requests.get(URL_SERVER + 'requests?set_inyector_stats&username=' + USERNAME + '&password=' + PASSWORD +
+            '&program=' + str(i.inyector) +
+            '&prop_required=' + str(i.prop_required) +
+            '&prop_required_ec_ph=' + str(i.prop_required_ec_ph) +
+            '&required_flow=' + str(i.required_flow) +
+            '&required_volume=' + str(i.required_volume) +
+            '&total_inyected=' + str(i.total_inyected))
+    return dataJson
+
 def send_terminal_stats():
-    stats = read_from_terminal_stats()
-    if stats != None:
-        response = requests.get(URL_SERVER + 'requests?set_stats&username=' + USERNAME + '&password=' + PASSWORD +
-            '&irrigation_program=' + str(stats.irrigation_program) +
-            '&fertilization_program=' + str(stats.fertilization_program) +
-            '&next_irrigation_program=' + str(stats.next_irrigation_program) +
-            '&irrigation_1=' + str(stats.irrigation_1) +
-            '&irrigation_2=' + str(stats.irrigation_2) +
-            '&preirrigation_1=' + str(stats.preirrigation_1) +
-            '&preirrigation_2=' + str(stats.preirrigation_2) +
-            '&postirrigation_1=' + str(stats.postirrigation_1) +
-            '&postirrigation_2=' + str(stats.postirrigation_2) +
-            '&units=' + str(stats.units) +
-            '&irrigation_time_1=' + str(stats.irrigation_time_1) +
-            '&irrigation_time_2=' + str(stats.irrigation_time_2) +
-            '&irrigation_time_3=' + str(stats.irrigation_time_3) +
-            '&cubic_meters=' + str(stats.cubic_meters) +
-            '&irrigation_before_suspend_1=' + str(stats.irrigation_before_suspend_1) +
-            '&irrigation_before_suspend_2=' + str(stats.irrigation_before_suspend_2) +
-            '&flow_measured_m3_h=' + str(stats.flow_measured_m3_h) +
-            '&p1_kg=' + str(stats.p1) +
-            '&p2_kg=' + str(stats.p2) +
-            '&condition_program=' + str(stats.c_prog) +
-            '&ec_asked=' + str(stats.ec_asked) +
-            '&ph_asked=' + str(stats.ph_asked) +
-            '&ec_medium=' + str(stats.ec_measured) +
-            '&ph_medium=' + str(stats.ph_measured) +
-            '&ec_average=' + str(stats.ec_average) +
-            '&ph_average=' + str(stats.ph_average) +
-            '&valves=' + str(stats.valves))
-        dataJson = response.json()
-        response = requests.get(URL_SERVER + 'requests?set_stats_actuators&username=' + USERNAME + '&password=' + PASSWORD +
-            '&irrigation_pump=' + str(stats.actuators.irrigation_pump) +
-            '&fertilization_pump=' + str(stats.actuators.fertilization_pump) +
-            '&blender=' + str(stats.actuators.blender) +
-            '&alarm=' + str(stats.actuators.alarm) +
-            '&inyectors=' + stats.actuators.inyectors)
-        dataJson = response.json()
-        response = requests.get(URL_SERVER + 'requests?set_filters_stats&username=' + USERNAME + '&password=' + PASSWORD +
-            '&filters=' + stats.filters.filters +
-            '&sustain_valve=' + str(stats.filters.sustain_valve) +
-            '&backwash_state=' + str(stats.filters.backwash_state) +
-            '&backwash_reason=' + str(stats.filters.backwash_reason) +
-            '&next_backwash_min=' + str(stats.filters.next_backwash_min) +
-            '&next_backwash_hour=' + str(stats.filters.next_backwash_hour) +
-            '&backwash_manual=-1&backwash_manual_now=-1')
-        dataJson = response.json()
-        for i in stats.inyectors:
-            response = requests.get(URL_SERVER + 'requests?set_inyector_stats&username=' + USERNAME + '&password=' + PASSWORD +
-                '&program=' + str(i.inyector) +
-                '&prop_required=' + str(i.prop_required) +
-                '&prop_required_ec_ph=' + str(i.prop_required_ec_ph) +
-                '&required_flow=' + str(i.required_flow) +
-                '&required_volume=' + str(i.required_volume) +
-                '&total_inyected=' + str(i.total_inyected))
-        return dataJson
+    global finished_send_stats
+    if finished_send_stats == None or not finished_send_stats.is_alive():
+        stats = read_from_terminal_stats()
+        if stats != None:
+            from threading import Thread
+            finished_send_stats = Thread(name = 'set_stats', target = send_terminal_stats_thread, args=(stats,))
+            finished_send_stats.start()
 
 def get_total_books():
     byteList = read_registers(BASE_BOOKS_TOTAL, 1)
@@ -1525,24 +1583,15 @@ def main_loop():
                     send_books(b)
             elif book_count == 0:
                 clear_all_books_server()
-        if statsCounter % 200 == 199:
-            to_send = read_from_controller_irr_info()
-            for irr_info in to_send:
-                payload = {'username': USERNAME, 'password': PASSWORD,
-                           'set_info_irr': 1, 'prog': irr_info.prog,
-                           'kicks': irr_info.kicks,
-                           'total_hh': irr_info.total_hh,
-                           'total_mm': irr_info.total_mm,
-                           'total_m3': irr_info.total_m3,
-                           'next_irr_hh': irr_info.next_irr_hh,
-                           'next_irr_mm': irr_info.next_irr_mm,
-                           'ph_avg': irr_info.ph_avg,
-                           'ec_avg': irr_info.ec_avg,
-                           'inyectors': ','.join(map(str, irr_info.inyectors))}
-                response = requests.get(
-                    URL_SERVER +
-                    'requests', payload)
-                dataJson = response.json()
+        if statsCounter % 40 == 39:
+            import time
+            global finished_send_info_irr
+            if finished_send_info_irr == None or not finished_send_info_irr.is_alive():
+                to_send = read_from_controller_irr_info()
+                if to_send != None:
+                    from threading import Thread
+                    finished_send_info_irr = Thread(name = 'set_info_irr', target = send_info_irr_thread, args=(to_send,))
+                    finished_send_info_irr.start()
         if statsCounter % 60 == 1:
             book_count = get_total_books()
             book_count_server = get_total_books_server()
@@ -1573,10 +1622,10 @@ def main_loop():
                 cs.save_to_file(FILEPATH_SAVE)
                 for x in what["irrigation"]:
                     write_controller_irrigation(x)
-                for x in what["irrigation"]:
-                    byteList = read_registers(BASE_PROGRIEGO_STATE+x-1, 1)
-                    cs.allIrrigation[x].state = byteList[0]
-                    send_set_irrigation_state_status(x, True)
+                # for x in what["irrigation"]:
+                #     byteList = read_registers(BASE_PROGRIEGO_STATE+x-1, 1)
+                #     cs.allIrrigation[x].state = byteList[0]
+                #     send_set_irrigation_state_status(x, True)
                 for x in what["fertilization"]:
                     write_controller_fertilization(x)
                 for x in what["inyection"]:
@@ -1619,8 +1668,6 @@ def send_pulse_gpio():
         RPi.GPIO.output(4, False)
         sleep(0.5)
 
-pulses_thread_run = True
-
 if __name__ == "__main__":
     try:
         import RPi.GPIO
@@ -1641,6 +1688,17 @@ if __name__ == "__main__":
         except Exception as ex:
             logger.info("exception, restarting")
             logger.exception(ex)
+            try:
+                payload = {'username': USERNAME, 'password': PASSWORD, 'set_exception' : 1, 'description': str(ex)}
+                response = requests.get(
+                    URL_SERVER +
+                    'requests', payload)
+            except Exception as ex:
+                pass
             pulses_thread_run = False
-            exit()
+            if extra_reset_board:
+                # el programa no deberia salir, deberia reiniciar el mismo reset board
+                time.sleep(15*60) # espera 15m para que el board reinicie, si no reinicia x software
+            else:
+                exit()
         time.sleep(TIME_UPDATE)
