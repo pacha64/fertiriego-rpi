@@ -14,7 +14,7 @@ USE_RPI = True
 
 CONNECTION_TIMEOUT = 10
 
-CURRENT_VERSION = 45
+CURRENT_VERSION = 46
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
