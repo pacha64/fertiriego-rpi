@@ -14,7 +14,7 @@ USE_RPI = True
 
 CONNECTION_TIMEOUT = 15
 
-CURRENT_VERSION = 47
+CURRENT_VERSION = 48
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -1689,7 +1689,8 @@ if __name__ == "__main__":
             logger.info("exception, restarting")
             logger.exception(ex)
             try:
-                payload = {'username': USERNAME, 'password': PASSWORD, 'set_exception' : 1, 'description': str(ex)}
+                import traceback
+                payload = {'username': USERNAME, 'password': PASSWORD, 'set_exception' : 1, 'description': str(ex), 'full_description': traceback.format_exc()}
                 response = requests.get(
                     URL_SERVER +
                     'requests', payload, timeout=CONNECTION_TIMEOUT)
