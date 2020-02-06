@@ -14,7 +14,7 @@ USE_RPI = True
 
 CONNECTION_TIMEOUT = 15
 
-CURRENT_VERSION = 48
+CURRENT_VERSION = 49
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -1007,6 +1007,12 @@ def send_set_irrigation(irrId):
         dataJson = response.json()
         return (dataJson)
 
+def send_clear_irrigation_status_all():
+    payload = {'username': USERNAME, 'password': PASSWORD, 'clear_all_status': 1}
+    response = requests.get(
+        URL_SERVER +
+        'requests', payload, timeout=CONNECTION_TIMEOUT)
+
 def send_set_irrigation_state_status_all():
     to_send = []
     for x in range(0, 50):
@@ -1564,6 +1570,8 @@ def main_loop():
             logger.info("login error")                           
     else:
         # mandar manual irr y estado de prog cada 6 updates, aprox 12s
+        if statsCounter == 0:
+            send_clear_irrigation_status_all()
         if statsCounter % 20 == 1:
             read_from_other_configs()
             global write_other
