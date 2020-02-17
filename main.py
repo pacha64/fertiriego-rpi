@@ -14,7 +14,7 @@ USE_RPI = True
 
 CONNECTION_TIMEOUT = 15
 
-CURRENT_VERSION = 49
+CURRENT_VERSION = 50
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -815,7 +815,7 @@ def write_controller_irrigation(pr):
         byteList = read_registers(BASE_PROGRIEGO_STATE+pr-1, 1)
         byteList[0] = ProgRiego.status
         write_registers(BASE_PROGRIEGO_STATE+pr-1, 1, byteList)
-    ProgRiego.status = -1
+    ProgRiego.status = -2
 
 def write_controller_config_alarms():
     ConfigAl = cs.alarm_config
@@ -1009,7 +1009,7 @@ def send_set_irrigation(irrId):
 
 def send_clear_irrigation_status_all():
     payload = {'username': USERNAME, 'password': PASSWORD, 'clear_all_status': 1}
-    response = requests.get(
+    requests.get(
         URL_SERVER +
         'requests', payload, timeout=CONNECTION_TIMEOUT)
 
@@ -1180,7 +1180,6 @@ def send_alarm():
 
 def send_power_buttons():
     read_from_alarms()
-    alarm = cs.alarm
     response = requests.get(URL_SERVER + 'requests?set_power_buttons&username=' + USERNAME + '&password=' + PASSWORD + '&who=1&stop_button=0&start_button=0', timeout=CONNECTION_TIMEOUT)
     dataJson = response.json()
     return dataJson
@@ -1295,8 +1294,6 @@ def read_from_terminal_stats():
 def read_from_controller_irr_info():
     to_return = []
     import time
-    count_sec = 0
-    count_sec_read = 0
     for i in range(50):
         byteList = [0, i+1]
         write_registers(BASE_IRR_INFO, 1, byteList)
@@ -1569,7 +1566,6 @@ def main_loop():
         else:
             logger.info("login error")                           
     else:
-        # mandar manual irr y estado de prog cada 6 updates, aprox 12s
         if statsCounter == 0:
             send_clear_irrigation_status_all()
         if statsCounter % 20 == 1:
@@ -1628,12 +1624,9 @@ def main_loop():
                 what = cs.what_to_upload(new_cs)
                 cs = new_cs
                 cs.save_to_file(FILEPATH_SAVE)
+                send_clear_irrigation_status_all()
                 for x in what["irrigation"]:
                     write_controller_irrigation(x)
-                # for x in what["irrigation"]:
-                #     byteList = read_registers(BASE_PROGRIEGO_STATE+x-1, 1)
-                #     cs.allIrrigation[x].state = byteList[0]
-                #     send_set_irrigation_state_status(x, True)
                 for x in what["fertilization"]:
                     write_controller_fertilization(x)
                 for x in what["inyection"]:
