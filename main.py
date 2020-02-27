@@ -14,7 +14,7 @@ USE_RPI = True
 
 CONNECTION_TIMEOUT = 15
 
-CURRENT_VERSION = 50
+CURRENT_VERSION = 51
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -322,9 +322,11 @@ def read_from_controller_fertilization(pf):
     Val = [0] * 10
     while (i < 8):
         Val[i] = float(byteList[2 * i] * 256 + byteList[2 * i + 1])
-        if pf in cs.allInyection and (cs.allInyection[pf].function == 5 or cs.allInyection[pf].function == 6 or cs.allInyection[pf].function == 7):
+        if i+1 in cs.allInyection and (cs.allInyection[i+1].function == 5 or cs.allInyection[i+1].function == 6 or cs.allInyection[i+1].function == 7):
             Val[i] = Val[i] / 10
-        i = i + 1
+        elif i+1 in cs.allInyection and cs.allInyection[i+1].function == 0: # si el inyector no esta config
+            Val[i] = 0
+        i += 1
     Val[8] = byteList[16] / 10
     Val[9] = byteList[17] / 10
     FertProg.program = pf
@@ -586,8 +588,9 @@ def read_from_controller_input_output():
         i = i + 1
     analog_input_3 = listaRead[0:4]
     analog_input_4 = listaRead[4:8]
-    ConfigIO_w.analog_input_1 = ','.join(str(e) for e in analog_input_1)
-    ConfigIO_w.analog_input_2 = ','.join(str(e) for e in analog_input_2)
+    import math
+    ConfigIO_w.analog_input_1 = ','.join(str(float(e)/10) for e in analog_input_1)
+    ConfigIO_w.analog_input_2 = ','.join(str(float(e)/10) for e in analog_input_2)
     ConfigIO_w.analog_input_3 = ','.join(str(e) for e in analog_input_3)
     ConfigIO_w.analog_input_4 = ','.join(str(e) for e in analog_input_4)
     if (ConfigIO != ConfigIO_w):
@@ -632,6 +635,9 @@ def write_controller_fertilization(pf):
     for elem in newList:
         if i in cs.allInyection and (cs.allInyection[i].function == 5 or cs.allInyection[i].function == 6 or cs.allInyection[i].function == 7):
             elem *= 10
+        elif i in cs.allInyection and cs.allInyection[i].function == 0:
+            elem = 0
+        i += 1
         byteList.append(int(elem / 256))
         byteList.append(elem % 256)
     Add = BASE_PROGFERT + (pf - 1) * 18
@@ -678,10 +684,10 @@ def write_controller_input_output():
     # Leer los analog_inputs Pedirle a Fernando que cambie los labels
     listaSalA = []
     listaSalA = cs.config_io.analog_input_1.split(',')
-    listaSalA = [math.floor(float(i)/10) for i in listaSalA]
+    listaSalA = [math.floor(float(i)*10) for i in listaSalA]
     listaSalB = []
     listaSalB = cs.config_io.analog_input_2.split(',')
-    listaSalB = [math.floor(float(i)/10) for i in listaSalB]
+    listaSalB = [math.floor(float(i)*10) for i in listaSalB]
     listaSalC = []
     listaSalC = cs.config_io.analog_input_3.split(',')
     listaSalC = [int(i) for i in listaSalC]
@@ -1509,12 +1515,12 @@ def on_controller_modifier():
     read_from_controller_config_alarms()
     read_from_controller_input_output()
     read_from_other_configs()
+    for i in range(0, TOTAL_INY):
+        read_from_controller_inyectors(i + 1)
     for i in range(0, TOTAL_FERT):
         read_from_controller_fertilization(i + 1)
     for i in range(0, TOTAL_IRR):
         read_from_controller_irrigation(i + 1)
-    for i in range(0, TOTAL_INY):
-        read_from_controller_inyectors(i + 1)
 
 def calculate_crc(listCRC):
     i = 0
@@ -1627,10 +1633,10 @@ def main_loop():
                 send_clear_irrigation_status_all()
                 for x in what["irrigation"]:
                     write_controller_irrigation(x)
-                for x in what["fertilization"]:
-                    write_controller_fertilization(x)
                 for x in what["inyection"]:
                     write_controller_inyection(x)
+                for x in what["fertilization"]:
+                    write_controller_fertilization(x)
                 if what["backflush"]:
                     write_controller_backflush()
                 if what["other"]:
