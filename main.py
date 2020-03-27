@@ -14,7 +14,7 @@ USE_RPI = True
 
 CONNECTION_TIMEOUT = 15
 
-CURRENT_VERSION = 51
+CURRENT_VERSION = 52
 USERNAME = getUsername()
 PASSWORD = getPassword()
 URL_SERVER = 'http://emiliozelione2018.pythonanywhere.com/'
@@ -743,7 +743,6 @@ def write_other_configs():
     byteList.append(cs.other.booster_pump)
     byteList.append(secondByte[1])
     write_registers(BASE_BOOSTER, 1, byteList)
-
 
 def write_controller_inyection(iny):
     byteList = []
@@ -1633,8 +1632,8 @@ def main_loop():
                 send_clear_irrigation_status_all()
                 for x in what["irrigation"]:
                     write_controller_irrigation(x)
-                for x in what["inyection"]:
-                    write_controller_inyection(x)
+                #for x in what["inyection"]:
+                #    write_controller_inyection(x)
                 for x in what["fertilization"]:
                     write_controller_fertilization(x)
                 if what["backflush"]:
